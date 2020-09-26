@@ -1,8 +1,8 @@
 # RingBuffer
 
-这是一个用于学习如何实现环形缓冲区的Java类库，提供了无锁的环形缓冲阻塞队列和无锁模式下安全的等待队列实现。
+这是一个用于学习如何实现环形缓冲区的Java类库，提供了线程安全的无锁环形缓冲阻塞队列和无锁模式下安全的等待队列实现。
 
-*This is a Java class library for learning how to implement ring buffers. It provides a lock-free ring buffer blocking queue and a safe waiting queue in lock-free mode.*
+*This is a Java class library for learning how to implement ring buffers. It provides thread-safe lock-free ring buffer blocking queues and safe waiting queues in lock-free mode.*
 
 # Introduction
 
