@@ -73,7 +73,7 @@ public class RingBufferBlockingQueueTest {
             if (queue.size() != enqueueThreadCount * enqueueCount - dequeueThreadCount * dequeueCount) {
                 throw new AssertionError();
             }
-            System.out.println("Concurrent " + epoch);
+            System.out.println("Concurrent epoch " + epoch);
         }
         System.out.println(System.currentTimeMillis() - begin);
     }

@@ -1,5 +1,6 @@
 package fun.fengwk.ringbuffer;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 import fun.fengwk.ringbuffer.WaitingQueue.WaitingNode;
@@ -47,11 +48,7 @@ public class RingBufferBlockingQueue<E> {
      * 缓冲区用于保存队列元素
      */
     private final E[] buffer;
-    /**
-     * 写标记
-     */
-    private volatile boolean[] write;
-    
+
     /**
      * 
      * @param capacity 队列容量
@@ -63,7 +60,6 @@ public class RingBufferBlockingQueue<E> {
         }
         this.capacity = capacity;
         this.buffer = (E[]) new Object[capacity];
-        this.write = new boolean[capacity];
     }
 
     /**
@@ -73,6 +69,7 @@ public class RingBufferBlockingQueue<E> {
      * @throws InterruptedException
      */
     public void enqueue(E element) throws InterruptedException {
+        Objects.requireNonNull(element);
         for (;;) {
             checkInterrupted();
             // 先读rid再读wid能保证wid总是大于等于rid
@@ -104,14 +101,13 @@ public class RingBufferBlockingQueue<E> {
             // 1.有其它enqueue线程率先抢占了wid进行写操作，直接重试即可
             // 2.当前位置在循环缓存上一轮使用时被写了，由于此时remaining一定小于boundOfSize，因此一定会有dequeue线程擦除原先的写记录，重试等待即可
             // 此处由于有情况1的存在因此不能使用自旋
-            if (write[widIdx]) {
+            if (buffer[widIdx] != null) {
                 Thread.yield();
                 continue;
             }
             // 抢占wid
             if (writeIdGen.compareAndSet(wid, wid+1)) {
                 buffer[widIdx] = element;
-                write[widIdx] = true;
                 // 此前可能有dequeue线程已被(或即将被)挂起了，先进行唤醒
                 empty.signal();
                 break;
@@ -156,7 +152,7 @@ public class RingBufferBlockingQueue<E> {
             // 1.有其它dequeue线程已经抢占了该rid读完后擦去了写标记，直接重试即可。
             // 2.由于一旦执行到此处必然满足条件remaining大于0，则此位置必然已被一个enqueue线程抢占了，该线程正在写入数据还没写完，重试等待即可。
             // 此处由于有情况1的存在因此不能使用自旋。
-            if (!write[ridIdx]) {
+            if (buffer[ridIdx] == null) {
                 Thread.yield();
                 continue;
             }
@@ -165,9 +161,8 @@ public class RingBufferBlockingQueue<E> {
             // 抢占rid
             if (readIdGen.compareAndSet(rid, rid+1)) {
                 // 这里不使用CAS修改buffer元素是安全的
-                // 因为enqueue不能写入一个write为true的位置，所以在设置write[ridIdx]为false之前该位置是不可重写入的，而dequeue无法读取一个尚未enqueue的位置
+                // 因为enqueue不能写入一个已存在元素的位置，所以在设置buffer[ridIdx]为null前该位置是不可重写入的，而dequeue无法读取一个尚未enqueue的位置
                 buffer[ridIdx] = null;
-                write[ridIdx] = false;
                 full.signal();
                 return ret;
             }
@@ -203,8 +198,9 @@ public class RingBufferBlockingQueue<E> {
         long rid = readIdGen.get();
         long wid = writeIdGen.get();
         for (; rid < wid; rid++) {
-            if (write[indexOf(rid)]) {
-                builder.append(buffer[indexOf(rid)]).append(',');
+            int ridIdx = indexOf(rid);
+            if (buffer[ridIdx] != null) {
+                builder.append(buffer[ridIdx]).append(',');
             }
         }
         return (builder.length() > 1 ? builder.substring(0, builder.length() - 1) : builder.toString()) + ']';
