@@ -1,4 +1,4 @@
-package fun.fengwk.ringbuffer;
+package fun.fengwk.concurrentqueue;
 
 import java.util.ArrayList;
 import java.util.List;

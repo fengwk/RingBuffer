@@ -1,10 +1,10 @@
-package fun.fengwk.ringbuffer;
+package fun.fengwk.concurrentqueue;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-import fun.fengwk.ringbuffer.WaitingQueue.WaitingNode;
+import fun.fengwk.concurrentqueue.WaitingQueue.WaitingNode;
 
 /**
  * 环形缓冲阻塞队列。
@@ -110,7 +110,7 @@ public class RingBufferBlockingQueue<E> {
             if (writeIdGen.compareAndSet(wid, wid+1)) {
                 buffer.set(widIdx, element);
                 // 此前可能有dequeue线程已被(或即将被)挂起了，先进行唤醒
-                empty.signal();
+                    empty.signal();
                 break;
             }
         }

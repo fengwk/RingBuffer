@@ -1,8 +1,8 @@
-package fun.fengwk.ringbuffer;
+package fun.fengwk.concurrentqueue;
 
 import org.junit.jupiter.api.Test;
 
-import fun.fengwk.ringbuffer.WaitingQueue.WaitingNode;
+import fun.fengwk.concurrentqueue.WaitingQueue.WaitingNode;
 
 /**
  * 
